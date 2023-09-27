@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commander!</title>
+</head>
+<body>
+  <h1>CMD</h1>
+  <p>ie. commands:</p>
+  <p>generate_file</p>
+  <input type="text" id="message" placeholder="Enter a message">
+  <button id="send">Send</button>
+  <ul id="messages"></ul>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Handle message sending
+    document.getElementById('send').addEventListener('click', () => {
+      const message = document.getElementById('message').value;
+      socket.emit(`${message}`, message);
+      document.getElementById('message').value = '';
+    });
+
+    // Handle incoming messages
+    socket.on('message', (data) => {
+      const messages = document.getElementById('messages');
+      const listItem = document.createElement('li');
+      listItem.textContent = data;
+      messages.appendChild(listItem);
+    });
+  </script>
+</body>
+</html>

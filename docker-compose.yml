@@ -1,0 +1,43 @@
+version: '3.9'
+
+volumes:
+  servervol:
+    name: servervol
+    driver: local
+    driver_opts:
+      type: none
+      device: ./serverdata
+      o: bind
+
+  clientvol:
+    name: clientvol
+    driver: local
+    driver_opts:
+      type: none
+      device: ./clientdata
+      o: bind
+
+services:
+  server:
+    image: node:latest
+    container_name: server
+    working_dir: /app
+    volumes:
+      - ./server:/app
+      - servervol:/serverdata
+    ports:
+      - "80:80"
+    command: npm start
+
+  client:
+    image: node:latest
+    container_name: client
+    working_dir: /app
+    depends_on:
+      - "server"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - clientvol:/clientdata
+    command: npm start
