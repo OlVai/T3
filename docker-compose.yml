@@ -9,14 +9,6 @@ volumes:
       device: ./serverdata
       o: bind
 
-  clientvol:
-    name: clientvol
-    driver: local
-    driver_opts:
-      type: none
-      device: ./clientdata
-      o: bind
-
 services:
   server:
     image: node:latest
@@ -29,15 +21,20 @@ services:
       - "80:80"
     command: npm start
 
-  client:
-    image: node:latest
-    container_name: client
-    working_dir: /app
-    depends_on:
-      - "server"
-    ports:
-      - "3000:3000"
+  database:
+    image: postgres
+    restart: always
     volumes:
-      - ./client:/app
-      - clientvol:/clientdata
-    command: npm start
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=Qwerty1!
+      - POSTGRES_DB=db
+
+  adminer:
+    image: adminer
+    restart: always
+    volumes:
+      - ./adminer.css:/var/www/html/adminer.css
+    ports:
+      - "5432:8080"
