@@ -10,6 +10,14 @@
 <body>
  <!-- Tab links -->
 <div class="tab">
+  <div class="tabcontent" id="addNetwork">
+    <h3>Add Network</h3>
+    <form id="addNetworkForm">
+      <label for="databaseName">Database Name:</label>
+      <input type="text" id="databaseName" name="databaseName" required>
+      <button type="submit" id="submitNetwork">Submit</button>
+    </form>
+  </div>
 </div>
 
 <div class="contentDiv">
@@ -20,39 +28,8 @@
 <script>
     const socket = io();
 
-    function addToTab(database, text){
-      const tab = document.querySelector(".tab"); 
-      var button = document.createElement("button");
-      button.className = "tablinks";
-      button.onclick = function(event) {
-        openCity(event, `${database}`);
-      };
-      button.textContent = `${text}`;
-      tab.appendChild(button);
-    }
 
-    function addTabcontent(id){
-      const contentDiv = document.querySelector(".contentDiv"); 
-      const tabContent = document.createElement("div");
-      tabContent.className = "tabcontent";
-      tabContent.id = `${id}`;
-      contentDiv.appendChild(tabContent);
-    }
-
-    socket.on('database_names', (data) => {
-      const tab = document.querySelector(".tab"); 
-      tab.innerHTML = "";
-      data.forEach((element) => {
-        addToTab(element, element);
-        addTabcontent(element);
-      });
-      addToTab('addNetwork', '+');
-      addTabcontent('addNetwork');
-    });
-    
-    socket.emit('get_databases', ' ');
-
-    function openCity(evt, cityName) {
+    function openCity(evt, cityName, callback) {
       // Declare all variables
       var i, tabcontent, tablinks;
     
@@ -61,6 +38,10 @@
       for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
         tabcontent[i].innerHTML = ""; // Clear tab content
+        tabcontent[i].className = tabcontent[i].className.replace(" active", "");
+        if(tabcontent[i].id === `${cityName}`){
+          tabcontent[i].className += " active";
+        }
       }
     
       // Get all elements with class="tablinks" and remove the class "active"
@@ -75,21 +56,97 @@
       evt.currentTarget.className += " active";
 
       // Send a socket.io request with the message "db_stuff" when pressing the tab button with text "Verkko 1"
-      if (cityName === 'db') {
-        socket.emit('db_stuff', ' ');
+
+      if (cityName === 'addNetwork') {
+        generateAddNetworkForm();
+      } else {
+        // If it's not "addNetwork," hide the tab content
+        document.getElementById(cityName).style.display = "block";
+        socket.emit('db_stuff', cityName);
         console.log("Sending!");
       }
 
-      if (cityName === 'addNetwork'){
-        socket.emit('add_network_db', 'mynetwork');
-        console.log("Add new network request sent!")
+      if (typeof callback === 'function') {
+        callback(cityName);
       }
+
     }
+
+    document.querySelector(".contentDiv").addEventListener("click", function (event) {
+      if (event.target.classList.contains("addButton")) {
+        const row = event.target.parentNode.parentNode; // Get the parent row of the clicked button
+        handleAddButtonClick(row); // Call the function to handle the button click
+      }
+    });
+
+    // Store the current heading for each set of rows
+    let currentHeadingText = '';
+
+    socket.on('switch_tab', (cityName) => {
+    // Call the openCity function with the specified cityName
+    openCity({ currentTarget: document.querySelector(`.tablinks[onclick="openCity(event, '${cityName}')"]`) }, cityName);
+  });
+
+    // Function to generate the "addNetwork" form
+    function generateAddNetworkForm() {
+      const tabContent = document.getElementById("addNetwork");
+      tabContent.style.display = "block";
+
+      // Create the form and its elements
+      const form = document.createElement("form");
+      form.id = "addNetworkForm";
+
+      const label = document.createElement("label");
+      label.htmlFor = "databaseName";
+      label.textContent = "Database Name:";
+      form.appendChild(label);
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.id = "databaseName";
+      input.name = "databaseName";
+      input.required = true;
+      form.appendChild(input);
+
+      const submitButton = document.createElement("button");
+      submitButton.type = "submit";
+      submitButton.id = "submitNetwork";
+      submitButton.textContent = "Submit";
+      form.appendChild(submitButton);
+
+      // Add a submit event listener to the form
+      form.addEventListener("submit", (event) => {
+        handleAddNetworkFormSubmit(event);
+      });
+
+      // Append the form to the tab content
+      tabContent.appendChild(form);
+    }
+
+    // Function to handle the "addNetwork" form submission
+    function handleAddNetworkFormSubmit(event) {
+      event.preventDefault(); // Prevent the default form submission
+
+      const form = document.getElementById('addNetworkForm');
+      const databaseName = form.elements.databaseName.value;
+
+      // Emit the "add_network_db" socket event with the databaseName
+      socket.emit('add_network_db', databaseName);
+      
+      // You can also refresh the page after adding the network
+      socket.emit('refresh_page');
+    }
+
+    // Add an event listener to the form's submit button
+    document.getElementById('addNetworkForm').addEventListener('submit', handleAddNetworkFormSubmit);
 
     socket.on('message', (data) => {
       // Parse the JSON data
       //console.log(`Parsing: ${data}`)
       const jsonData = JSON.parse(data);
+
+      // Store the current heading text
+      currentHeadingText = jsonData.title;
 
       // Find the current active tab
       const currentTab = document.querySelector(".tabcontent.active");
@@ -111,6 +168,7 @@
         row.className = "row";
         var first = true;
         var second = true;
+        let firstColumnValue = null;
 
         for (const key in item) {
           if (item.hasOwnProperty(key)) {
@@ -118,6 +176,7 @@
             if(first) {
               column.className = "column1";
               first = false;
+              firstColumnValue = item[key];
             } else if(second){
               column.className = "column2";
               second = false;
@@ -127,11 +186,74 @@
           }
         }
 
+        // Check if the value of "column1" is an integer
+        if (!isNaN(parseInt(firstColumnValue))) {
+          const addButtonColumn = document.createElement("div");
+          addButtonColumn.className = "buttonColumn";
+          // Create a delete button if it's an integer
+          const deleteButton = document.createElement("button");
+          deleteButton.textContent = "Delete";
+          deleteButton.addEventListener("click", function() {
+            delete_row(row); // Assuming "delete_row" is a function that deletes the row
+          });
+          addButtonColumn.appendChild(deleteButton);
+          row.appendChild(addButtonColumn);
+        }
+
         // Append the row to the current tab
         if (currentTab) {
           currentTab.appendChild(row);
         }
       }
+
+      console.log(jsonData.items[0]);
+
+      const row = document.createElement("div");
+      row.className = "row";
+      var first = true;
+      var second = true;
+
+      //text fields to these columns
+      for (const item in jsonData.items[0]) {
+        if (first) {
+          const idColumn = document.createElement("div");
+          idColumn.className = "column1";
+          first = false;
+          idColumn.textContent = "#";
+          row.appendChild(idColumn);
+        } else if (second) {
+          const column = document.createElement("div");
+          column.className = "column2";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.name = jsonData.items[0][item];
+          column.appendChild(input); 
+          second = false;
+          row.appendChild(column);
+        } else {
+          const column = document.createElement("div");
+          column.className = "column";
+          const input = document.createElement("input"); 
+          input.type = "text"; 
+          input.name = jsonData.items[0][item];
+          column.appendChild(input); 
+          row.appendChild(column);
+        }
+      }
+
+        const addButtonColumn = document.createElement("div");
+        addButtonColumn.className = "buttonColumn";
+        const addButton = document.createElement("button"); 
+        addButton.textContent = "Add";
+        addButton.className = "addButton";
+        addButtonColumn.appendChild(addButton);
+        row.appendChild(addButtonColumn);
+
+      if (currentTab) {
+        currentTab.appendChild(row);
+      }
+
+
 
       // Remove the "active" class from all tab links
       const tablinks = document.getElementsByClassName("tablinks");
@@ -147,6 +269,138 @@
 
       console.log("Tab modification complete!")
     });
+
+    function addToTab(database, text){
+      const tab = document.querySelector(".tab"); 
+      var button = document.createElement("button");
+      button.className = "tablinks";
+      button.setAttribute("onclick", `openCity(event, '${database}')`);
+      button.textContent = `${text}`;
+      tab.appendChild(button);
+    }
+
+    function addTabcontent(id){
+      const contentDiv = document.querySelector(".contentDiv"); 
+      const tabContent = document.createElement("div");
+      if(id === "db"){ tabContent.className = "tabcontent active"; }
+                else { tabContent.className = "tabcontent"; }
+      tabContent.id = `${id}`;
+      contentDiv.appendChild(tabContent);
+    }
+
+    socket.on('database_names', (data) => {
+      const tab = document.querySelector(".tab"); 
+      tab.innerHTML = "";
+      data.forEach((element) => {
+        addToTab(element, element);
+        addTabcontent(element);
+      });
+      addToTab('addNetwork', '+');
+      addTabcontent('addNetwork');
+    });
+
+        socket.on('refresh_page', () => {
+      // Get the tab name from the current active tab
+      const activeTab = document.querySelector(".tabcontent.active");
+      const cityName = activeTab ? activeTab.id : null;
+
+      // Define a callback function to refresh the content of the active tab
+      const refreshCallback = (tabName) => {
+        // Here, you can implement logic to refresh the content of the tab
+        // For example, you can make an AJAX request to the server to fetch updated data
+        // and then update the tab's content with the new data.
+        // After the content is updated, you may also want to set the tab as active again.
+
+        // Example:
+        // fetchUpdatedData(tabName)
+        //   .then((data) => {
+        //     updateTabContent(tabName, data);
+        //     setActiveTab(tabName);
+        //   })
+        //   .catch((error) => {
+        //     console.error('Error refreshing tab content:', error);
+        //   });
+      };
+
+      // Call the openCity function with the tab name and the refreshCallback
+      openCity(
+        { currentTarget: document.querySelector(`.tablinks[onclick="openCity(event, '${cityName}')"]`) },
+        cityName,
+        refreshCallback
+      );
+    });
+    // Function to send data through socket.io
+    function delete_row(element) {
+      const deleteButton = element; 
+      const heading = findLastH3Before(deleteButton);
+      const data = {};
+      const column1 = element.querySelector(".column1")
+
+      if (column1) {
+        data.id = column1.textContent; // Get the text content of the "column1" element
+      } else {
+        console.log("Element with class 'column1' not found in the row.");
+      }
+
+      if (heading) {
+        // Add the text content of the <h3> to the data
+        data.heading = heading.textContent;
+      }
+
+      // Find the current active tab
+      const currentTab = document.querySelector(".tabcontent.active");
+      data.database = currentTab ? currentTab.id : null;
+
+      socket.emit('remove_row', data);
+    }
+    
+
+    // Function to send data through socket.io
+    function sendDataThroughSocket(data, element) {
+      const addButton = element; // Assuming you have a reference to the "ADD" button element
+      const heading = findLastH3Before(addButton);
+
+      if (heading) {
+        // Add the text content of the <h3> to the data
+        data.heading = heading.textContent;
+      }
+
+      // Find the current active tab
+      const currentTab = document.querySelector(".tabcontent.active");
+      data.database = currentTab ? currentTab.id : null;
+
+      // Replace 'yourSocket' with your actual socket.io instance
+      socket.emit('add_row', data);
+    }
+
+    // Function to find the last preceding <h3> element
+    function findLastH3Before(element) {
+      let previous = element.previousElementSibling;
+      while (previous) {
+        if (previous.tagName === 'H3') {
+          return previous;
+        }
+        previous = previous.previousElementSibling;
+      }
+      return null; // No preceding <h3> element found
+    }
+
+    // Function to handle the "ADD" button click for a specific row
+    function handleAddButtonClick(row) {
+      const inputFields = row.querySelectorAll('input'); // Select all input fields in the row
+      const data = {};
+
+      // Collect the values from the input fields and store them in the 'data' object
+      inputFields.forEach(input => {
+        data[input.name] = input.value;
+      });
+
+      // Send the data through socket.io, including the stored heading text
+      sendDataThroughSocket(data, row); // Pass the row element as an argument
+    }
+    
+    socket.emit('get_databases', ' ');
+
 </script>
 </body>
 </html>

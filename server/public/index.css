@@ -31,6 +31,10 @@
     font-size: 12px;
   }
 
+  .column input {
+    width: 250px;
+  }
+
   .column1 {
     float: left;
     width: 30px;
@@ -41,6 +45,7 @@
     font-size: 12px;
   }
 
+
   .column2 {
     float: left;
     width: 170px;
@@ -49,6 +54,38 @@
     border-style: solid;
     border-width: 1px;
     font-size: 12px;
+  }
+
+  .column2 input {
+    width: 150px;
+  }
+
+  .buttonColumn {
+    float: left;
+    width: 40px;
+    padding: 9px 10px;
+    background-color: #efefef;
+    border-style: solid;
+    border-width: 1px;
+    font-size: 12px;
+  }
+
+  .buttonColumn button{
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .buttonColumn button:hover {
+    background-color: #ddd;
+  }
+  
+  /* Create an active/current tablink class */
+  .buttonColumn button.active {
+    background-color: #ccc;
   }
   
   .row:after {

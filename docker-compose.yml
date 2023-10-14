@@ -1,22 +1,12 @@
 version: '3.9'
 
-volumes:
-  servervol:
-    name: servervol
-    driver: local
-    driver_opts:
-      type: none
-      device: ./serverdata
-      o: bind
-
 services:
   server:
-    image: node:latest
+    image: node:alpine
     container_name: server
     working_dir: /app
     volumes:
       - ./server:/app
-      - servervol:/serverdata
     ports:
       - "80:80"
     command: npm start
@@ -37,4 +27,21 @@ services:
     volumes:
       - ./adminer.css:/var/www/html/adminer.css
     ports:
-      - "5432:8080"
+      - "81:8080"
+
+
+  stats:
+    image: influxdb
+    ports:
+      - "82:8086"
+    volumes:
+      - ./influxDB:/var/lib/influxdb2
+      #- ./influxconfig/config.yml:/etc/influxdb2/config.yml
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=Qwerty1!
+      - DOCKER_INFLUXDB_INIT_ORG=OlliOy
+      - DOCKER_INFLUXDB_INIT_BUCKET=site-statistics
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=olipakerranyksipienidatapankki

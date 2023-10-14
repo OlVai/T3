@@ -208,9 +208,7 @@ CREATE TABLE public."WLAN" (
     ip text,
     device text,
     address text,
-    ssid1 text,
-    ssid2 text,
-    ssid3 text
+    ssid text
 );
 
 
@@ -391,7 +389,7 @@ Observium|http://10.0.1.50:8668|(observium:observium)
 -- Data for Name: WLAN; Type: TABLE DATA; Schema: public; Owner: admin
 --
 
-COPY public."WLAN" (ip, device, address, ssid1) FROM stdin (DELIMITER '|');
+COPY public."WLAN" (ip, device, address, ssid) FROM stdin (DELIMITER '|');
 10.0.0.150|Aruba IAP 103|https://10.0.0.150:4343/#home|lanlabra
 \.
 
@@ -403,55 +401,6 @@ COPY public."WLAN" (ip, device, address, ssid1) FROM stdin (DELIMITER '|');
 COPY public."ePDU" (ip, device, address) FROM stdin (DELIMITER '|');
 10.0.0.129|ePDU|http://labrapdu.labra.local
 \.
-
-
---
--- Name: Kytkimet_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."Kytkimet_id_seq"', 1, true);
-
-
---
--- Name: NAS_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."NAS_id_seq"', 1, true);
-
-
---
--- Name: Proxmox_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."Proxmox_id_seq"', 1, true);
-
-
---
--- Name: Reitittimet_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."Reitittimet_id_seq"', 1, true);
-
-
---
--- Name: Seurantapalvelut_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."Seurantapalvelut_id_seq"', 1, true);
-
-
---
--- Name: WLAN_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."WLAN_id_seq"', 1, true);
-
-
---
--- Name: ePDU(s)_id_seq; Type: SEQUENCE SET; Schema: public; Owner: admin
---
-
-SELECT pg_catalog.setval('public."ePDU(s)_id_seq"', 1, true);
 
 
 --
